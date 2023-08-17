@@ -1,0 +1,119 @@
+---
+title: "Atividade 1: Algoritmo de Metropolis-Hastings"
+author: "Heloiza de Oliveira Souza"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Amostrador de Metropolis-Hastings
+
+
+**Exércicio 1** Simule uma amostra aleatória de tamanho 30 da distribuição Poisson$(\lambda = 4)$. Considerando a distribuição a priori como Gama($\alpha = 2, \beta = 2$), obtenha uma cadeia de Markov de 11 mil valores da distribuição a posteriori. Obtenha uma amostra aleatória de tamanho 1.000 da distribuição a posteriori. Compare as estimativas obtidas pela amostra com os resultados teóricos usando gráficos e medidas resumo. 
+
+
+**Solução:**
+```{r}
+# criando a função razão
+razao <- function(amostra, x, y){
+    n <- length(amostra)
+    numer <- y^(1+sum(amostra))*exp(-(n+2)*y)
+    denom <- x^(1 +sum(amostra))*exp(-(n+2)*x)
+    return(numer/denom)
+}
+
+
+# obtendo a amostra de X
+set.seed(2023)
+z <- rpois(n = 30, lambda = 4)
+table(z)
+
+# obtendo a Cadeia de Markov
+tamanho <- 11000
+x <- numeric(tamanho)
+x[1] <- runif(1)
+for (t in 2:tamanho) {
+    y <- rgamma(1,1)
+    u <- runif(1)
+    x[t] <- ifelse(test = u <= razao(z, x[t-1], y), yes = y, no = x[t-1])
+}
+summary(x)
+#quantidade de rejeições
+1-length(unique(x))/tamanho
+
+plot(x = seq(1, tamanho), y = x, type = "l")
+
+#obtenho uma a.a. de n=1.000 da distribuição a posteriori, com saltos
+amostra <- x[seq(1001, tamanho, by=10)]
+plot(x = seq(1:1000), y = amostra, type = "l")
+#calcular a correlação
+acf(amostra)
+# os dados ainda estão muito correlacionados
+
+#comparação das estimativas da amostra com os resultados teóricos
+hist(amostra, freq = F)
+lines(density(amostra), col="red")
+theta1 <- seq(2.00,5.00,0.01)
+lines(theta1, dgamma(x = theta1, shape = 118, rate = 32), col="blue")
+
+
+# médias:
+118/32
+mean(amostra)
+```
+
+
+
+
+
+**Exércicio 2** Seja $X_1,...,X_n$ uma amostra aleatória da distribuição Normal($\mu, \sigma^2$), sendo que $\sigma^2=1$. Considerando como distribuição a priori para o parâmetro $\mu$ a t-Student com $v=4$ graus de liberdade, obtenha uma cadeia de Markov de 21 mil valores da distribuição a posteriori. Obtenha uma amostra aleatória de tamanho 1.000 da distribuição a posteriori. Compare as estimativas obtidas pela amostra com os resultados teóricos usando gráficos e medidas resumo. 
+
+
+**Solução:**
+```{r}
+rm(list = ls())
+#criando a função da razão
+razao <- function(amostra, x, y){
+  numerador <- exp((-1/2)*sum(amostra-y)^2 + (-5/2)* log(1+(y^2)/4))
+  denominador <- exp((-1/2)*sum(amostra-x)^2 + (-5/2)* log(1+(x^2)/4))
+  return(numerador/denominador)
+}
+
+
+# obtendo a amostra de Z~N(0,1) SEI LÁÁÁÁÁÁ pq
+set.seed(2023)
+z <- rnorm(30) # n=30 pq sim
+
+# obtendo a Cadeia de Markov
+tamanho <- 21000
+x <- numeric(tamanho)
+x[1] <- rnorm(1)
+for (t in 2:tamanho) {
+    y <- rnorm(1)
+    u <- runif(1)
+    x[t] <- ifelse(test = u <= razao(z, x[t-1], y), yes = y, no = x[t-1])
+}
+summary(x)
+
+#quantidade de rejeições
+1-length(unique(x))/tamanho
+
+plot(x = seq(1, tamanho), y = x, type = "l")
+
+#obtenho uma a.a. de n=1.000 da distribuição a posteriori, com saltos
+amostra <- x[seq(1001, tamanho, by=20)]
+plot(x = seq(1:1000), y = amostra, type = "l")
+
+acf(amostra)
+
+
+#comparação das estimativas da amostra com quê resultados teóricos?
+hist(amostra, freq = F)
+lines(density(amostra), col="red")
+# theta1 <- seq(-0.20,0.20,0.01)
+# lines(theta1, dnorm(theta1), col="blue")
+
+
+```
