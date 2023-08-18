@@ -1,10 +1,11 @@
 rm(list = ls())
-
+library(gumbel) # pacote da distribuição gumbel
+library(mvtnorm) # pacote para distribuição normal multivariada
 
 # normal multivariada -----------------------------------------------------
 
 
-library(mvtnorm) # pacote para distribuição normal multivariada
+
 
 
 sigma <- matrix(c(4,2,2,2,3,2,2,2,5), ncol=3)
@@ -28,13 +29,13 @@ posteriori <- function(mu, sigmai, ksi){
     # bi é estimada pelo quantil 9% de Lavras
     # qi é gerado da gumbel com ai e bi como parâmetros
     # x é a amostra
-    
-    # jacobiano <- (sigmai/ksi^2) * det()
-    nucleo_gumbel <- prod( (1/bi) * exp( -((qi-ai)/bi) - exp(- ((qi-ai)/bi))))
-    n <- length(x) # tamanho da amostra
-    verossimil <- (1/sigmai^n) * prod( (1+ ksi*((x-mu)/sigmai))^((1+ksi)/ksi) ) * exp( sum(- (1+ ksi* ((x-mu)/sigmai))^-1/ksi ))
+    verossimil <- (1/sigmai^n) * prod( (1+ ksi*((x-mu)/sigmai))^((1+ksi)/ksi) ) * exp( sum(- (1+ ksi* ((x-mu)/sigmai))^(-1/ksi) ))
+    pmu <- dnorm(mu, 0, 10)
+    psig <- dgamma(sigmai, shape = 2, scale = 1/2)
+    pksi <- dnorm(ksi, 0, 10)
+    h <- verossimil * pmu * psig * pksi
+    return(h)
 }
-
 
 # razão do critério de escolha 
 razao <- function(y, x){
@@ -44,7 +45,15 @@ razao <- function(y, x){
 }
 
 
+# amostra da população de estudo TESTE (aqui é pra ser os dados de precipitação)
+n <- 30
+x <- rgumbel(n, 4)
 
+# inicializando a cadeia
+tamanho <- 20
+xt <- matrix(nrow = tamanho, ncol = 3)
+xt[1,] <- c(1,2,1)
 
-# a amostra observada são as precipitações né?
-
+# algoritmo M-H
+for (t in 2:tamanho) {
+    y <- rmvnorm(1)
