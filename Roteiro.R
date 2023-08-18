@@ -25,16 +25,16 @@
 # para ajustar a taxa de rejeição altero o valor de sigma
 
 
-# convergência da cadeia --------------------------------------------------
-
-# posso usar os plots do Geweke -- package coda -- comando geweke.plot
-
-
-# amostra independente e função perda -------------------------------------
+# amostra aleatória e função perda -------------------------------------
 
 # pra ter a amostra independente faço o burn-in e os saltos
 # a estimativa pela função perda quadrática é a média e a perda absoluta é a mediana
 # cada parâmetro deve ter sua amostra final
+
+
+# convergência da cadeia --------------------------------------------------
+
+# posso usar os plots do Geweke -- package coda -- comando geweke.plot
 
 
 # estimação da densidade --------------------------------------------------
