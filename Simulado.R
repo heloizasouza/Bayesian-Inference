@@ -30,7 +30,7 @@ razao <- function(y,xt) {
 
 # amostra da população em estudo ------------------------------------------
 
-n <- 10
+n <- 100
 x <- rweibull(n, shape = 5, scale = 2)
 summary(x)
 
@@ -106,6 +106,8 @@ median(sigma)
 geweke.plot(as.mcmc(alpha)) # convergência de alpha
 geweke.plot(as.mcmc(sigma)) # convergência de sigma
 
+
+geweke.diag(as.mcmc(alpha), frac1 = 0.4)
 
 # Densidade por Kernel ----------------------------------------------------
 
