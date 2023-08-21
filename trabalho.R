@@ -23,21 +23,21 @@ posteriori <- function(mu, sigmai, ksi){
 
 # razão do critério de escolha 
 razao <- function(y, xt){
-    num <- posteriori(y[1], y[2], y[3]) * dnorm(x, mean = y)
-    den <- posteriori(xt[1], xt[2], xt[3]) * dnorm(y, mean = x)
+    num <- posteriori(y[1], y[2], y[3])
+    den <- posteriori(xt[1], xt[2], xt[3])
     return(num/den)
 }
 
 
 # amostra da pressipitação de Jaboticabal
 x <- readxl::read_xlsx('precipitacao_jaboticabal.xlsx')
-x <- x[,-1]
+x <- x[,2]
 n <- length(x)
 
 # inicializando a cadeia
 tamanho <- 20
 theta <- matrix(nrow = tamanho, ncol = 3)
-theta[1,] <- c(0.5,2,0.33)
+theta[1,] <- c(10,36,18)
 
 # algoritmo M-H
 for (t in 2:tamanho) {
@@ -52,3 +52,21 @@ for (t in 2:tamanho) {
     }
     
 }
+
+
+
+#  algoritmo Metropolis ---------------------------------------------------
+
+# 
+# for (t in 2:tamanho) {
+#     u <- runif(1)
+#     y <- c(theta[t-1,1] + rnorm(1), theta[t-1,2] + rnorm(1), theta[t-1,3] + rnorm(1))
+#     cat("\n", "t=",t,"y=",y," razao=", razao(y, theta[t-1,]))
+#     aceita <- razao(y, theta[t-1,])
+#     if(u <= aceita) {
+#         theta[t,] <- y
+#     } else {
+#         theta[t,] <- theta[t-1,]
+#     }
+#     
+# }
