@@ -92,7 +92,7 @@ posteriori <- function(amostra, theta){
     return(h)
 }
 
-# distribuição candidata exp(3)
+# distribuição candidata gamma
 
 # razão de escolha do candidato
 razao <- function(amostra, y, x){

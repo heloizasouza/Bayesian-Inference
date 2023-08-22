@@ -68,22 +68,6 @@ par(mfrow=c(1,2))
 plot(theta[,1], type = 'l')
 plot(theta[,2], type='l')
 
-# TESTES DOS ERROS e PERGUNTAAAAS -----------------------------------------
-
-
-# tanto a minha posteriori quanto a do cadu têm o mesmo resultado 
-# o problema que eu vi tá sendo na razão, desde o primeiro valor dela da NA
-# ontem o y estava recebendo valores negativos no sigma que não pode ter (EVITO ISSO TROCANDO O PASSEIO ALEATÓRIO????)
-
-
-# posterioris para teste
-
-# posteriori aplicada nos valores de y
-((y[1]/y[2])^n ) * ( prod( (x/y[2]) )^(y[1]-1) ) * exp( -sum( (x)^y[1] )/y[2]^y[1] ) * dgamma(y[1],a,scale = 1/b) * dgamma(y[2],c,scale = 1/d)
-
-# POSTERIORI DO CADUUUU
-y[1]^(n+a-1)*y[2]^(c-1-n*y[1])*exp((-sum(x^y[1])/(y[2]^y[1]))-b*y[1]-d*y[2])*prod(x^(y[1]-1))
-
 
 # amostra aleatória -------------------------------------------------------
 

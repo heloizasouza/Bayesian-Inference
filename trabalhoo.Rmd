@@ -1,0 +1,177 @@
+---
+title: ANÁLISE BAYESIANA NO ESTUDO DO TEMPO DE RETORNO DAS PRECIPITAÇÕES PLUVIAIS
+  MÁXIMAS EM JABOTICABAL (SP)
+author: "null"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(coda)
+library(mvtnorm)
+```
+
+#### Autor: Luiz Alberto Beijo
+#### Apresentação: Heloiza de Oliveira Souza
+
+
+Dados históricos de precipitação máxima são utilizados para realizar previsões de chuvas extremas, cujo conhecimento é de grande importância na elaboração de projetos agrícolas e de engenharia hidráulica. A distribuição generalizada de valores extremos (GEV) tem sido aplicada com freqüência nesses tipos de estudos, porém ainda com dificuldade na obtenção de estimativas confiáveis. Para obter melhorias na qualidade das estimativas uma alternativa é utilizar informações dos especialistas da área.
+
+Sendo assim, foi objetivo deste trabalho analisar a aplicação da Inferência Bayesiana com uma distribuição a priori baseada em quantis extremos, que facilite a incorporação dos conhecimentos fornecidos por especialistas, para obter as estimativas de precipitação máxima para os tempos de retorno de 10 e 20 anos e seus respectivos limites superiores de 95%, para o período anual e para os meses da estação chuvosa em Jaboticabal (SP). 
+
+A técnica Monte Carlo, via Cadeias de Markov (MCMC), foi empregada para inferência a posteriori de cada parâmetro, sendo o amostrador utilizado o algoritmo de Metropolis com passeio aleatório.
+
+Os dados utilizados foram obtidos a partir dos registros pluviográficos fornecidos pelo Departamento de Ciências Exatas da Faculdade de Ciências Agrárias e Veterinária da UNESP, campus Jaboticabal, estado de São Paulo; as observações referem-se às precipitações pluviais diárias máximas, expressas em altura de lâmina d’água (mm), referentes a 40 anos de observação do período compreendido entre janeiro de 1956 a dezembro de 1995.
+
+
+```{r}
+rm(list = ls())
+set.seed(2023)
+# amostra da pressipitação de Jaboticabal
+x <- readxl::read_xlsx('precipitacao_jaboticabal.xlsx')
+
+ggplot(data = x, mapping = aes(ANO, y = MAX.ANO)) + 
+    geom_line() + ylab('Precipitação máxima no ano') + xlab('Ano')
+# precipitação máxima do ano
+x <- x$MAX.ANO
+n <- length(x)
+
+```
+
+### Algoritmo Metrópolis
+
+```{r, warning=FALSE}
+
+# densidade a posteriori
+logposteriori <- function(mu, sigmai, ksi){
+    logverossimil <- -n*log(sigmai) + sum((-(1+ksi)/ksi) * log( (1+ ksi*((x-mu)/sigmai)) )) +  sum(- (1+ ksi* ((x-mu)/sigmai))^(-1/ksi) )
+    pmu <- dnorm(mu, 50, 100, log = T) # priori pra mu
+    psig <- dgamma(sigmai, shape = 10, log = T) # priori pra sigma
+    pksi <- dnorm(ksi, 0, 10, log = T) # priori pra ksi
+    h <- logverossimil + pmu + psig + pksi
+    return(h)
+}
+
+# log verossimilhança
+logvero <- function(p0){
+    mu <- p0[1]
+    sigmai <- p0[2]
+    ksi <- p0[3]
+    logverossimil <- -n*log(sigmai) + sum((-(1+ksi)/ksi) * log( (1+ ksi*((x-mu)/sigmai)) )) +  sum(- (1+ ksi* ((x-mu)/sigmai))^(-1/ksi) )
+    h <- -logverossimil
+    return(h)
+}
+
+# recurso de inferência clássica
+otimizacao <- optim(c(1,1,1), logvero, hessian = TRUE)
+matriz <- solve(otimizacao$hessian)
+
+# razão do critério de escolha do log da posteriori
+razao <- function(y, xt){
+    num <- logposteriori(y[1], y[2], y[3])
+    den <- logposteriori(xt[1], xt[2], xt[3])
+    return(exp(num - den))
+}
+
+# inicializando a cadeia
+tamanho <- 20000
+theta <- matrix(nrow = tamanho, ncol = 3)
+theta[1,] <- c(67,12,0.4) # chutes iniciais
+
+# algoritmo Metropolis com passeio aleatório
+for (t in 2:tamanho) {
+    u <- runif(1)
+    # gerando pelo passeio aleatório da normal multivariada com mu no estado atual e sigma de 10% matriz de covariância
+    y <- rmvnorm(1, mean = theta[t-1,], sigma = 0.1*matriz)
+   # cat("\n", "t=",t,"y=",y," razao=", razao(y, theta[t-1,]))
+    aceita <- razao(y, theta[t-1,])
+    if(u <= aceita) {
+        theta[t,] <- y
+    } else {
+        theta[t,] <- theta[t-1,]
+    }
+}
+
+# taxa de rejeição
+tx <- 1 - length(unique(theta[,2]))/tamanho
+cat("Taxa de rejeição do amostrador: ",tx*100,"%")
+
+# visualização das cadeias geradas
+par(mfrow=c(1,3))
+plot(theta[,1], type = 'l')
+plot(theta[,2], type='l')
+plot(theta[,3], type='l')
+
+# correlação da cadeia gerada pra cada parâmetro
+par(mfrow=c(1,3))
+acf(theta[,1])
+acf(theta[,2])
+acf(theta[,3])
+
+# amostras independentes
+mu <- theta[seq(1001,tamanho,by=55),1]
+acf(mu)
+sigma <- theta[seq(1001,tamanho,by=55),2]
+acf(sigma)
+ksi <- theta[seq(1001,tamanho,by=55),3]
+acf(ksi)
+
+```
+
+### Função de perda quadrática dos parâmetros
+
+```{r}
+# parâmetro mu
+mean(mu)
+# parâmetro sigma
+mean(sigma)
+# parâmetro ksi
+mean(ksi)
+
+```
+
+
+### Convergência das cadeias
+
+```{r}
+
+# convergência do parâmetro mu
+geweke.plot(as.mcmc(mu))
+# convergência do parâmetro sigma
+geweke.plot(as.mcmc(sigma))
+# convergência do parâmetro ksi
+geweke.plot(as.mcmc(ksi))
+
+```
+
+
+### Densidades
+
+```{r}
+
+par(mfrow=c(1,3))
+hist(x = mu, probability = T, main = 'Mu')
+lines(density(mu), col='blue')
+hist(x = sigma, probability = T, main = 'Sigma')
+lines(density(sigma), col='red')
+hist(x = ksi, probability = T, main = 'Ksi')
+lines(density(ksi), col='green')
+
+```
+
+
+# Intervalos de maior densidade a posteriori
+
+```{r}
+# intervalo do parâmetro mu
+HPDinterval(as.mcmc(mu))
+# intervalo do parâmetro sigma
+HPDinterval(as.mcmc(sigma))
+# intervalo do parâmetro ksi
+HPDinterval(as.mcmc(ksi))
+
+```
+
