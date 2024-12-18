@@ -14,9 +14,14 @@ A análise foca nas precipitações máximas anuais e mensais para os períodos 
 2. **Algoritmo de Metropolis**: O amostrador MCMC (Cadeias de Markov por Monte Carlo) foi utilizado para realizar a inferência a posteriori dos parâmetros da distribuição.
 3. **Distribuição Generalizada de Valores Extremos (GEV)**: A distribuição GEV foi utilizada para modelar as precipitações extremas, com foco em tempos de retorno de 10 e 20 anos.
 
-## Requisitos
+## Dependências
 
-- Pacotes R: `ggplot2`, `coda`, `mvtnorm`, `readxl`
+O código utiliza as seguintes bibliotecas R:
+
+- `readxl` — Faz a leitura de arquivos Excel (.xls e .xlsx) no R.
+- `ggplot2` — Faz a criação de gráficos e visualizações de dados de forma eficiente e flexível.
+- `coda` — Utilizado para análise de cadeias de Markov e diagnóstico de modelos bayesianos.
+- `mvtnorm` — Fornece funções para trabalhar com distribuições normais multivariadas.
 
 ## Contribuições
 
